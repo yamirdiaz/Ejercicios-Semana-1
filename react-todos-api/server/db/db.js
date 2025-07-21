@@ -1,0 +1,1 @@
+export const uriDb = 'mongodb://localhost:27017/'
