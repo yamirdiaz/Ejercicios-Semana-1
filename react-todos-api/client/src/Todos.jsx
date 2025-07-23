@@ -140,7 +140,7 @@ const Todos = () => {
                     /> : <h3 
                     className="text-lg font-semibold hover:cursor-pointer"                    
                     >{todo}</h3>}
-                  <p className="text-sm text-gray-600 ">Priority: {priority}/10</p>
+                  <p className="text-sm text-gray-600 mb-2">Priority: {priority}/10</p>
                   <button                  
                   className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded transition hover:cursor-pointer"
                   onClick={() => updateTodo(id)}
