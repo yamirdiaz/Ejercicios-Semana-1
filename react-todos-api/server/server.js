@@ -5,7 +5,7 @@ import cors from 'cors'
 const app = express()
 const PORT = 4000
 
-
+app.use(cors())
 
 app.use('/api', router)
 

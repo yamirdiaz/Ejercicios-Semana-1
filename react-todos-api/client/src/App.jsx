@@ -1,35 +1,75 @@
 import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios'
 import './App.css'
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [ isUserValid, setIsUserValid ] = useState(true)
+  const navigate = useNavigate()
+
+  const handleSubmit = async (e) => {    
+    const { usernameInput, passwordInput } = Object.fromEntries(e)
+    try{
+      const response = await axios(`http://localhost:4000/api/user?username=${usernameInput}&password=${passwordInput}`)
+      const isVerify = response.data.isVerify
+      if(isVerify) {
+        setIsUserValid(true)
+        navigate('/todos', {state: {username: usernameInput}})
+      } else {
+        setIsUserValid(false)
+      }
+    }catch(err) {
+      console.error('Fetch for user did not went well, here is why: ' + err )
+    }
+    
+  };
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
+    <div className="flex items-center justify-center min-h-screen bg-gray-300">
+      <form action={handleSubmit} className="bg-white p-8 rounded shadow-md w-full max-w-sm">
+        <h2 className="text-2xl font-bold mb-6 text-center text-gray-700">Sign In</h2>
+        {!isUserValid && <p className='text-red-500 text-sm mb-8 text-center'>Your username or password is incorrect, please try again.</p>}
+
+        <div className="mb-4">
+          <label htmlFor="username" className="block text-sm font-medium text-gray-600">Username</label>
+          <input
+            type="text"
+            id="username"
+            name='usernameInput'
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            className="mt-1 w-full px-4 py-2 border rounded-md focus:ring focus:ring-indigo-300 focus:outline-none"
+            placeholder="johnDoe 465"
+            required
+          />
+        </div>
+
+        <div className="mb-6">
+          <label htmlFor="password" className="block text-sm font-medium text-gray-600">Password</label>
+          <input
+            type="password"
+            id="password"
+            name='passwordInput'
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="mt-1 w-full px-4 py-2 border rounded-md focus:ring focus:ring-indigo-300 focus:outline-none"
+            placeholder="************"
+            required
+          />
+        </div>
+
+        <button
+          type="submit"
+          className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded-md transition duration-200"
+        >
+          Sign In
         </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
+      </form>
+    </div>
   )
 }
+
 
 export default App
