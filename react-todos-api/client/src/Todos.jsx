@@ -16,6 +16,11 @@ const Todos = () => {
         try {
           const response = await axios(`http://localhost:4000/api/todos?username=${username}`)
           setTodos([...response.data.todos])
+          setTodos(prev => prev.map(el => ({
+            ...el,
+            isEditing: false,
+            id: el._id
+          })))
   
         } catch(err) {
           console.error("Error Fetching Todos: " + err)
@@ -31,10 +36,9 @@ const Todos = () => {
     try {
       const response = await axios.post(`http://localhost:4000/api/todos?username=${username}&todo=${todoInput}&priority=${priorityInput}`)
       const data = response.data.response.insertedId
-      console.log(data)
-      console.log(todos)
+      
       setTodos(prev => [...prev, {
-            _id: data,
+            id: data,
             username: username,
             priority: priorityInput,
             todo: todoInput,
@@ -48,14 +52,42 @@ const Todos = () => {
 
   const deleteTodo = async(id) => {
     
-    setTodos(todos.filter(todo => todo._id !== id));
+    setTodos(todos.filter(todo => todo.id !== id));
     const response = await axios.delete(`http://localhost:4000/api/todos?id=${id}`)
   };
 
-  const updateTodo = async(e) => {
-    const form = Object.fromEntries(e)
-    console.log(todoUpdate)
-    // console.log(todoModify)
+  const handleEnableEdit = (id) => {
+    
+    setTodos(prev => prev.map(todo => {
+      return todo.id === id ? {...todo, isEditing: true} : todo
+    }))
+  }
+
+  const handledisableEdit = (id) => {
+    
+    setTodos(prev => prev.map(todo => {
+      return todo.id === id ? {...todo, isEditing: false} : todo
+    }))
+  }
+
+  const handleEditChange = (id, value) => {
+    setTodos(prev => prev.map(el => {
+      return el.id === id ? {...el, todo: value} : el
+    }))
+  }
+
+  const updateTodo = async(id) => {
+    const { todo } = todos.filter(todo => todo.id === id)[0]
+    try {
+      const response = await axios.patch(`http://localhost:4000/api/todos?id=${id}&todo=${todo}`)
+      
+
+      if(response.ok) {
+        handledisableEdit(id)
+      }
+    } catch(err) {
+      console.error("An error updating the Todo has accurred" + err)
+    }
   }
 
   if( username ) {
@@ -92,26 +124,30 @@ const Todos = () => {
 
 
           <ul className="space-y-4">
-            {todos.map(({_id:id, username, priority, is_pending:isPending, todo}) => (
+            {todos.map(({id, username, priority, is_pending:isPending, todo, isEditing}) => (
               <li
                 key={id}
                 className="flex items-center justify-between bg-white p-4 rounded-lg shadow-md hover:shadow-lg transition"
+                onDoubleClick={() => handleEnableEdit(id)}
               >
-                <form action={updateTodo} className='text-left'>
-                  <input 
-                    className="text-lg font-semibold"
+                <div  className='text-left'>
+                  {isEditing ? <input 
+                    className="text-lg font-semibold hover:cursor-pointer focus:cursor-text" 
                     type='text'
                     name='todoUpdate'
                     defaultValue={todo}
-                    disabled={true}
-                    />
-                  {/* <p className="text-sm text-gray-600">Priority: {priority}/10</p> */}
+                    onChange={(e) => handleEditChange(id, e.target.value)}
+                    /> : <h3 
+                    className="text-lg font-semibold hover:cursor-pointer"                    
+                    >{todo}</h3>}
+                  <p className="text-sm text-gray-600 ">Priority: {priority}/10</p>
                   <button                  
-                  className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded transition"
+                  className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded transition hover:cursor-pointer"
+                  onClick={() => updateTodo(id)}
                   >
                     Update
                   </button>
-                </form>
+                </div>
                 <button
                   onClick={() => deleteTodo(id)}
                   className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded transition"

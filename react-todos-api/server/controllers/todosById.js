@@ -49,7 +49,8 @@ export const addTodo = async(req, res) => {
 }
 
 export const updateTodo = async (req, res) => {
-    const { todo, priority, id } = req.query
+    const { id, todo } = req.query
+    
     let response = ''
     const clientDb = new MongoClient(uriDb)
 
@@ -60,9 +61,7 @@ export const updateTodo = async (req, res) => {
             response += await db.updateOne({ _id: new ObjectId(id) }, {$set: {todo: todo}})
         }
 
-        if(priority) {
-            response += await db.updateOne({ _id: new ObjectId(id) }, {$set: {priority: priority}})
-        }
+        
         console.log(response)
         res.status(200).json({response})
     } catch(err) {
