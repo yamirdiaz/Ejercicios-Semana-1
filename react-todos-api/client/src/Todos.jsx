@@ -1,20 +1,24 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useContext } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { UserContext } from './UserContext';
 import './App.css';
 import axios from 'axios';
 import { useFetchTodos } from '../hooks/useFetchTodos';
 
 const Todos = () => {
+  const { isUserAuth, username, token, setToken } = useContext(UserContext)
   const [todos, setTodos] = useState([]);
   const [todoName, setTodoName] = useState('')
   const [priority, setPriority] = useState(10)
-  const username = useLocation().state?.username || null
+  
 
   useEffect( () => {
     const getTodos = async() =>{
-      if(username) {
+      if(isUserAuth) {
         try {
-          const response = await axios(`http://localhost:4000/api/todos?username=${username}`)
+          const response = await axios.get(`http://localhost:4000/api/todos?username=${username}`, {
+            headers: {authentication: `Bearer ${token}`}
+          })
           setTodos([...response.data.todos])
           setTodos(prev => prev.map(el => ({
             ...el,
@@ -90,7 +94,7 @@ const Todos = () => {
     }
   }
 
-  if( username ) {
+  if( isUserAuth ) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 p-6 text-gray-800 text-center mb-8">
         <div className="max-w-3xl mx-auto ">
