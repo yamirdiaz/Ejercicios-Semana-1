@@ -6,7 +6,8 @@ import dotenv from "dotenv"
 dotenv.config()
 
 export const getTodosByUser = async (req, res) => {
-    const { username } = req.query
+    // const { username } = req.query
+    const { name:username } = req.user
     
     const clientDb = new MongoClient(uriDb)
     try{
@@ -31,12 +32,13 @@ export const getAuthByUser = async (req, res) => {
         await clientDb.connect()
         const db = clientDb.db('yamirdiazNew').collection('users')
         const[ user] = await db.find({username: username}).toArray()
-        console.log(user)
+        
         const isVerify = user && await bcrypt.compare(password ,user.password) ? true : false 
         
         if(isVerify) {
             const userAuthJwt = { name: user.username }
             const accessToken = jwt.sign(userAuthJwt, process.env.VITE_ACCESS_TOKEN_SECRET)
+            
             res.status(202).send({isVerify, accessToken})
         } else {
 

@@ -5,22 +5,27 @@ import axios from 'axios'
 import './App.css'
 
 function Login() {
-  const { username, setUsername, setIsUserAuth, setToken } = useContext(UserContext)
+  const { username, setUsername, setIsUserAuth, setToken, isUserAuth } = useContext(UserContext)
   const [usernameLogin, setUsernameLogin] = useState(username ? username : '');
   const [password, setPassword] = useState('');
   const [ isUserValidLogin, setIsUserValidLogin ] = useState(true)
   const navigate = useNavigate()
+  
 
   const handleSubmit = async (e) => {    
     const { usernameInput, passwordInput } = Object.fromEntries(e)
     try{
-      const response = await axios(`http://localhost:4000/api/user?username=${usernameInput}&password=${passwordInput}`)
-      const {isVerify, accessToken} = response.data
+      const response = await axios.post(`http://localhost:3000/login?username=${usernameInput}&password=${passwordInput}`)
+      const {isVerify, accessToken, refreshToken} = response.data
+      
       if(isVerify && accessToken) {
         setIsUserValidLogin(true)
         setUsername(usernameInput)
         setIsUserAuth(true)
-        setToken(`${accessToken} 150`)
+        setToken(accessToken)
+        localStorage.setItem('token', accessToken)
+        localStorage.setItem('username', usernameInput)
+        localStorage.setItem('refreshToken', refreshToken)
         navigate('/todos')
       } 
     }catch(err) {
@@ -35,7 +40,7 @@ function Login() {
       <form action={handleSubmit} className="bg-white p-8 rounded shadow-md w-full max-w-sm">
         <h2 className="text-2xl font-bold mb-6 text-center text-gray-700">Sign In</h2>
         {!isUserValidLogin && <p className='text-red-500 text-sm mb-8 text-center'>Your username or password is incorrect, please try again.</p>}
-        {username && isUserValidLogin && <p className='text-green-500 text-sm mb-8 text-center'>Your registration was successful, please login into your account</p>}
+        {username && isUserValidLogin && !isUserAuth && <p className='text-green-500 text-sm mb-8 text-center'>Your registration was successful, please login into your account</p>}
 
         <div className="mb-4">
           <label htmlFor="username" className="block text-sm font-medium text-gray-600">Username</label>

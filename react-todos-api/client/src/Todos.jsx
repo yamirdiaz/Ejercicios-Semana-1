@@ -6,18 +6,22 @@ import axios from 'axios';
 import { useFetchTodos } from '../hooks/useFetchTodos';
 
 const Todos = () => {
-  const { isUserAuth, username, token, setToken } = useContext(UserContext)
+  const { isUserAuth, username, token, setToken, setIsUserAuth, setUsername } = useContext(UserContext)
   const [todos, setTodos] = useState([]);
   const [todoName, setTodoName] = useState('')
   const [priority, setPriority] = useState(10)
+  const [localToken, setLocalToken ]= useState(localStorage.getItem('token') || null)
+  const localUsername = localStorage.getItem('username') || null
+  const localRefreshToken = localStorage.getItem('refreshToken')
   
 
   useEffect( () => {
     const getTodos = async() =>{
-      if(isUserAuth) {
+      
+      if(localToken) {
         try {
-          const response = await axios.get(`http://localhost:4000/api/todos?username=${username}`, {
-            headers: {authentication: `Bearer ${token}`}
+          const response = await axios.get(`http://localhost:4000/api/todos?username=${localUsername}`, {
+            headers: {authentication: `Bearer ${localToken}`}
           })
           setTodos([...response.data.todos])
           setTodos(prev => prev.map(el => ({
@@ -27,18 +31,45 @@ const Todos = () => {
           })))
   
         } catch(err) {
+          localStorage.setItem('token', "")
+          setLocalToken(localStorage.getItem('token'))
           console.error("Error Fetching Todos: " + err)
         }
-      }      
+
+      
     }
-    getTodos()
-  }, [])
+    
+  }
+  getTodos()
+}, [localToken] )
+
+useEffect(() => {
+  const getRefreshToken = async() => {
+      if(!localToken) {
+        try {
+          const response = await axios.post(`http://localhost:3000/login/token`, {
+            token: localRefreshToken
+          })
+          const { accessToken } = response.data
+          if(accessToken) {
+            localStorage.setItem('token', accessToken)
+            setLocalToken(localStorage.getItem('token'))
+          }
+        }catch(err) {
+          console.error("Error on requesting a new token: " , err)
+        }
+      }
+    }
+    getRefreshToken()
+    }, [localToken])
 
   const addTodo = async(e) => {
     const { todoInput, priorityInput} = Object.fromEntries(e)
     
     try {
-      const response = await axios.post(`http://localhost:4000/api/todos?username=${username}&todo=${todoInput}&priority=${priorityInput}`)
+      const response = await axios.post(`http://localhost:4000/api/todos?username=${username}&todo=${todoInput}&priority=${priorityInput}`, null, {
+            headers: {authentication: `Bearer ${localToken}`}
+          })
       const data = response.data.response.insertedId
       
       setTodos(prev => [...prev, {
@@ -50,6 +81,8 @@ const Todos = () => {
         }])
       
     } catch(err) {
+      localStorage.setItem('token', "")
+      setLocalToken(localStorage.getItem('token'))
       console.error("Error adding new Todo" + err )
     }
   }
@@ -57,7 +90,13 @@ const Todos = () => {
   const deleteTodo = async(id) => {
     
     setTodos(todos.filter(todo => todo.id !== id));
-    const response = await axios.delete(`http://localhost:4000/api/todos?id=${id}`)
+    try {
+      const response = await axios.delete(`http://localhost:4000/api/todos?id=${id}`)
+    } catch(error) {
+      localStorage.setItem('token', "")
+      setLocalToken(localStorage.getItem('token'))
+      console.error("An error deleting a Todo has accurred" + err)
+    }
   };
 
   const handleEnableEdit = (id) => {
@@ -90,15 +129,17 @@ const Todos = () => {
         handledisableEdit(id)
       }
     } catch(err) {
+      localStorage.setItem('token', "")
+      setLocalToken(localStorage.getItem('token'))
       console.error("An error updating the Todo has accurred" + err)
     }
   }
 
-  if( isUserAuth ) {
+  if( localToken ) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 p-6 text-gray-800 text-center mb-8">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 p-6 text-gray-800 text-center mb-4">
         <div className="max-w-3xl mx-auto ">
-          <h1 className="text-4xl font-bold mb-2 text-blue-800">Welcome back {username}!</h1>
+          <h1 className="text-4xl font-bold my-8 text-blue-800">Welcome back {localUsername}!</h1>
           <h2 className="text-xl mb-6 text-blue-700">Here is your To Do List</h2>
 
           <form action={addTodo} className="bg-white p-4 rounded-lg shadow-md mb-6 flex flex-wrap justify-center gap-4 items-center ">
