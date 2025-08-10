@@ -1,0 +1,32 @@
+GET http://localhost:3000
+
+###
+POST http://localhost:3000/auth/registration
+Content-Type: application/json
+
+{ 
+    "username": "yamilitin", 
+    "email": "yamilitin@gmail.com",
+    "password": "123456789"
+}
+
+###
+POST http://localhost:3000/auth/recovery
+Content-Type: application/json
+
+{ 
+    "username": "yamilitin", 
+    "email": "yamilitin@gmail.com",
+    "password": "123456789"
+}
+
+###
+GET http://localhost:3000/auth/recovery
+Content-Type: application/json
+
+{
+    "email":"yamilitin@gmail.com"
+}
+
+
+
